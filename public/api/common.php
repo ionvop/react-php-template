@@ -127,6 +127,14 @@ function fetch(string $url, array $options = []): array {
     ];
 }
 
+/**
+ * Sends a JSON response with the given HTTP status code and terminates execution.
+ *
+ * @param mixed $data   The value to encode as JSON.
+ * @param int   $status The HTTP status code to send (default: 200).
+ *
+ * @return never
+ */
 function jsonResponse(mixed $data, int $status = 200): never {
     header("Content-Type: application/json");
     http_response_code($status);
