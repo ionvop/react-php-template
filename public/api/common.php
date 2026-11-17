@@ -119,3 +119,25 @@ function fetch(string $url, array $options = []): array {
         'json' => json_decode($bodyString, true)
     ];
 }
+
+function getUser(SQLite3 $db): array | false {
+    if (isset($_COOKIE["session"]) == false) {
+        return false;
+    }
+
+    $user = executePreparedQuery($db, <<<SQL
+        SELECT * FROM `users` WHERE :session
+    SQL, [
+        ":session" => $_COOKIE["session"]
+    ])->fetchArray(SQLITE3_ASSOC);
+
+    if ($user == false) {
+        return false;
+    }
+
+    if ($user["session"] == null) {
+        return false;
+    }
+
+    return $user;
+}
