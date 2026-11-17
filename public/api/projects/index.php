@@ -6,16 +6,12 @@ $data = json_decode(file_get_contents("php://input"), true);
 $user = getUser($db);
 
 if ($user == false) {
-    http_response_code(401);
-
-    echo json_encode([
+    jsonResponse([
         "status" => "fail",
         "data" => [
             "session" => "Invalid session."
         ]
-    ]);
-
-    exit;
+    ], 401);
 }
 
 try {
@@ -30,16 +26,12 @@ try {
                 ])->fetchArray(SQLITE3_ASSOC);
 
                 if ($project == false) {
-                    http_response_code(404);
-
-                    echo json_encode([
+                    jsonResponse([
                         "status" => "fail",
                         "data" => [
                             "project" => "Project not found."
                         ]
-                    ]);
-
-                    exit;
+                    ], 404);
                 }
 
                 exit;
@@ -51,30 +43,55 @@ try {
                 ":user_id" => $user["id"]
             ]);
 
+            if ($projectResult == false) {
+                jsonResponse([
+                    "status" => "error",
+                    "message" => "Failed to retrieve projects."
+                ], 500);
+            }
+
             $projects = [];
 
             while ($project = $projectResult->fetchArray(SQLITE3_ASSOC)) {
                 $projects[] = $project;
             }
 
-            http_response_code(200);
-
-            echo json_encode([
+            jsonResponse([
                 "status" => "success",
                 "data" => [
                     "projects" => $projects
                 ]
             ]);
-
-            exit;
         case "POST":
             switch ($data["_method"]) {
                 case "PUT":
-                    // PUT logic goes here
-                    exit;
+                    $success = executePreparedQuery($db, <<<SQL
+                        UPDATE `projects`
+                        SET `title` = :title, `description` = :description
+                        WHERE `id` = :id
+                    SQL, [
+                        ":title" => $data["title"],
+                        ":description" => $data["description"]
+                    ]);
+
+                    if ($success == false) {
+                        jsonResponse([
+                            "status" => "error",
+                            "message" => "Failed to update project."
+                        ], 500);
+                    }
+
+                    jsonResponse([
+                        "status" => "success",
+                        "data" => null
+                    ]);
                 case "DELETE":
                     // DELETE logic goes here
-                    exit;
+                    
+                    jsonResponse([
+                        "status" => "success",
+                        "data" => null
+                    ]);
             }
 
             $success = executePreparedQuery($db, <<<SQL
@@ -87,14 +104,10 @@ try {
             ]);
 
             if ($success == false) {
-                http_response_code(500);
-
-                echo json_encode([
+                jsonResponse([
                     "status" => "error",
                     "message" => "Failed to create project."
-                ]);
-
-                exit;
+                ], 500);
             }
 
             $project = executePreparedQuery($db, <<<SQL
@@ -104,19 +117,18 @@ try {
             ])->fetchArray(SQLITE3_ASSOC);
 
             if ($project == false) {
-                http_response_code(500);
-
-                echo json_encode([
+                jsonResponse([
                     "status" => "error",
                     "message" => "Failed to retrieve project."
-                ]);
-
-                exit;
+                ], 500);
             }
 
-            http_response_code(201);
-
-            exit;
+            jsonResponse([
+                "status" => "success",
+                "data" => [
+                    "project" => $project
+                ]
+            ], 201);
         default:
             jsonResponse([
                 "status" => "error",
