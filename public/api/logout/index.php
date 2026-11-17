@@ -10,50 +10,42 @@ try {
             $user = getUser($db);
 
             if ($user == false) {
-                http_response_code(401);
-
-                echo json_encode([
+                jsonResponse([
                     "status" => "fail",
                     "data" => [
                         "session" => "Invalid session."
                     ]
-                ]);
-
-                exit;
+                ], 401);
             }
 
-            executePreparedQuery($db, <<<SQL
+            $success = executePreparedQuery($db, <<<SQL
                 UPDATE `users` SET `session` = NULL WHERE `id` = :id
             SQL, [
                 ":id" => $user["id"]
             ]);
 
-            setcookie("session", "", time() - 3600, "/");
-            http_response_code(200);
+            if ($success == false) {
+                jsonResponse([
+                    "status" => "error",
+                    "message" => "Failed to delete session."
+                ], 500);
+            }
 
-            echo json_encode([
+            setcookie("session", "", time() - 3600, "/");
+
+            jsonResponse([
                 "status" => "success",
                 "data" => null
             ]);
-
-            exit;
         default:
-            http_response_code(405);
-
-            echo json_encode([
+            jsonResponse([
                 "status" => "error",
                 "message" => "Method not allowed."
-            ]);
-
-            exit;
+            ], 405);
     }
 } catch (Exception $e) {
-    http_response_code(500);
-
-    echo json_encode([
+    jsonResponse([
         "status" => "error",
         "message" => $e->getMessage()
-    ]);
-
-    exit;
+    ], 500);
 }
