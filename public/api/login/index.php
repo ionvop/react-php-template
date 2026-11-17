@@ -35,19 +35,17 @@ try {
 
             $session = uniqid("session-");
 
-            $success = executePreparedQuery($db, <<<SQL
+            executePreparedQuery($db, <<<SQL
                 UPDATE `users` SET `session` = :session WHERE `id` = :id
             SQL, [
                 ":session" => $session,
                 ":id" => $user["id"]
-            ]);
-
-            if ($success == false) {
+            ], function() {
                 jsonResponse([
                     "status" => "error",
                     "message" => "Failed to create session."
                 ], 500);
-            }
+            });
 
             setcookie("session", $session, 86400, "/");
 
