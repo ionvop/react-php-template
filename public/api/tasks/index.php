@@ -3,6 +3,52 @@
 require_once __DIR__ . "/../common.php";
 $data = json_decode(file_get_contents("php://input"), true);
 
+function validateTaskAccess(SQLite3 $db, int $projectId, array $user): void {
+    $project = executePreparedQuery($db, <<<SQL
+        SELECT * FROM `projects` WHERE `project_id` = :project_id
+    SQL, [
+        ":project_id" => $projectId
+    ])->fetchArray(SQLITE3_ASSOC);
+
+    if ($project == false) {
+        jsonResponse([
+            "status" => "fail",
+            "data" => [
+                "project" => "Project not found."
+            ]
+        ], 404);
+    }
+
+    if ($project["user_id"] != $user["id"]) {
+        jsonResponse([
+            "status" => "fail",
+            "data" => [
+                "task" => "Task not found."
+            ]
+        ], 404);
+    }
+}
+
+function getTaskById(SQLite3 $db, int $id, array $user): array {
+    $task = executePreparedQuery($db, <<<SQL
+        SELECT * FROM `tasks` WHERE `id` = :id
+    SQL, [
+        ":id" => $id
+    ])->fetchArray(SQLITE3_ASSOC);
+
+    if ($task == false) {
+        jsonResponse([
+            "status" => "fail",
+            "data" => [
+                "task" => "Task not found."
+            ]
+        ], 404);
+    }
+
+    validateTaskAccess($db, $task["project_id"], $user);
+    return $task;
+}
+
 try {
     $user = getUser($db);
 
@@ -18,44 +64,7 @@ try {
     switch ($_SERVER["REQUEST_METHOD"]) {
         case "GET":
             if (isset($_GET["id"])) {
-                $task = executePreparedQuery($db, <<<SQL
-                    SELECT * FROM `tasks` WHERE `id` = :id
-                SQL, [
-                    ":id" => $_GET["id"]
-                ])->fetchArray(SQLITE3_ASSOC);
-
-                if ($task == false) {
-                    jsonResponse([
-                        "status" => "fail",
-                        "data" => [
-                            "task" => "Task not found."
-                        ]
-                    ], 404);
-                }
-
-                $project = executePreparedQuery($db, <<<SQL
-                    SELECT * FROM `projects` WHERE `project_id` = :project_id
-                SQL, [
-                    ":project_id" => $task["project_id"]
-                ])->fetchArray(SQLITE3_ASSOC);
-
-                if ($project == false) {
-                    jsonResponse([
-                        "status" => "fail",
-                        "data" => [
-                            "project" => "Project not found."
-                        ]
-                    ], 404);
-                }
-
-                if ($project["user_id"] != $user["id"]) {
-                    jsonResponse([
-                        "status" => "fail",
-                        "data" => [
-                            "task" => "Task not found."
-                        ]
-                    ], 404);
-                }
+                $task = getTaskById($db, $_GET["id"], $user);
             
                 jsonResponse([
                     "status" => "success",
@@ -82,10 +91,29 @@ try {
                             ]
                         ], 400);
                     }
+
+                    $task = getTaskById($db, $_GET["id"], $user);
+
+                    executePreparedQuery($db, <<<SQL
+                        UPDATE `tasks`
+                        SET `content` = :content
+                        WHERE `id` = :id
+                    SQL, [
+                        ":id" => $task["id"]
+                    ], function() {
+                        jsonResponse([
+                            "status" => "error",
+                            "message" => "Failed to update task."
+                        ], 500);
+                    });
+
+                    $task = getTaskById($db, $task["id"], $user);
                     
                     jsonResponse([
                         "status" => "success",
-                        "data" => null
+                        "data" => [
+                            "task" => $task
+                        ]
                     ]);
                 case "DELETE":
                     if (isset($_GET["id"]) == false) {
@@ -97,7 +125,18 @@ try {
                         ], 400);
                     }
 
-                    // DELETE logic goes here
+                    $task = getTaskById($db, $_GET["id"], $user);
+
+                    executePreparedQuery($db, <<<SQL
+                        DELETE FROM `tasks` WHERE `id` = :id
+                    SQL, [
+                        ":id" => $task["id"]
+                    ], function() {
+                        jsonResponse([
+                            "status" => "error",
+                            "message" => "Failed to delete task."
+                        ], 500);
+                    });
                     
                     jsonResponse([
                         "status" => "success",
@@ -105,11 +144,28 @@ try {
                     ], 204);
             }
 
-            // POST logic goes here
+            validateTaskAccess($db, $data["project_id"], $user);
+
+            executePreparedQuery($db, <<<SQL
+                INSERT INTO `tasks` (`project_id`, `content`)
+                VALUE (:project_id, :content)
+            SQL, [
+                ":project_id" => $data["project_id"],
+                ":content" => $data["content"]
+            ], function() {
+                jsonResponse([
+                    "status" => "error",
+                    "message" => "Failed to create task."
+                ], 500);
+            });
+
+            $task = getTaskById($db, $db->lastInsertRowID(), $user);
             
             jsonResponse([
                 "status" => "success",
-                "data" => null
+                "data" => [
+                    "task" => $task
+                ]
             ], 201);
         default:
             jsonResponse([
