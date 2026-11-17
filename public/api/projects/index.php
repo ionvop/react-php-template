@@ -81,7 +81,7 @@ try {
                 ]
             ]);
         case "POST":
-            switch ($data["_method"]) {
+            switch ($data["_method"] ?? null) {
                 case "PUT":
                     if (isset($_GET["id"]) == false) {
                         jsonResponse([
