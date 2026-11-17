@@ -1,36 +1,27 @@
 <?php
 
 require_once __DIR__ . "/../common.php";
-header("Content-Type: application/json");
 $data = json_decode(file_get_contents("php://input"), true);
 
 try {
     switch ($_SERVER["REQUEST_METHOD"]) {
         case "POST":
             if (trim($data["username"]) == "") {
-                http_response_code(400);
-
-                echo json_encode([
+                jsonResponse([
                     "status" => "fail",
                     "data" => [
                         "username" => "Username is required."
                     ]
-                ]);
-
-                exit;
+                ], 400);
             }
 
             if (strlen($data["password"]) < 6) {
-                http_response_code(400);
-
-                echo json_encode([
+                jsonResponse([
                     "status" => "fail",
                     "data" => [
                         "password" => "Password must be at least 6 characters long."
                     ]
-                ]);
-
-                exit;
+                ], 400);
             }
 
             $user = executePreparedQuery($db, <<<SQL
@@ -40,46 +31,32 @@ try {
             ])->fetchArray(SQLITE3_ASSOC);
 
             if ($user != false) {
-                http_response_code(409);
-                
-                echo json_encode([
+                jsonResponse([
                     "status" => "fail",
                     "data" => [
                         "username" => "Username already exists."
                     ]
-                ]);
-
-                exit;
+                ], 409);
             }
 
             $hash = password_hash($data["password"], PASSWORD_DEFAULT);
 
-            $success = executePreparedQuery($db, <<<SQL
+            executePreparedQuery($db, <<<SQL
                 INSERT INTO `users` (`username`, `hash`)
                 VALUES (:username, :hash)
             SQL, [
                 ":username" => $data["username"]
-            ]);
-
-            if ($success == false) {
-                http_response_code(500);
-
-                echo json_encode([
+            ], function() {
+                jsonResponse([
                     "status" => "error",
                     "message" => "Failed to create user."
-                ]);
+                ], 500);
+            });
 
-                exit;
-            }
-
-            http_response_code(201);
-
-            echo json_encode([
+            jsonResponse([
                 "status" => "success",
                 "data" => null
-            ]);
-
-            exit;
+            ], 201);
         default:
             jsonResponse([
                 "status" => "error",
