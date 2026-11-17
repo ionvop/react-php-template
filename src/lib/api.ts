@@ -1,6 +1,8 @@
 import type { ApiEnvelope, FieldErrors, Project, Task, User } from "./types";
 
-const API_BASE = "/api";
+// Derived from Vite's `base` so the app also works when deployed under a
+// subdirectory (e.g. https://example.com/my-app/).
+const API_BASE = `${import.meta.env.BASE_URL}api`;
 
 export class ApiError extends Error {
   status: number;
