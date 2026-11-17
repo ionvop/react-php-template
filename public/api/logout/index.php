@@ -18,18 +18,16 @@ try {
                 ], 401);
             }
 
-            $success = executePreparedQuery($db, <<<SQL
+            executePreparedQuery($db, <<<SQL
                 UPDATE `users` SET `session` = NULL WHERE `id` = :id
             SQL, [
                 ":id" => $user["id"]
-            ]);
-
-            if ($success == false) {
+            ], function() {
                 jsonResponse([
                     "status" => "error",
                     "message" => "Failed to delete session."
                 ], 500);
-            }
+            });
 
             setcookie("session", "", time() - 3600, "/");
 
