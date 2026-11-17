@@ -35,7 +35,9 @@ try {
             $session = uniqid("session-");
 
             executePreparedQuery($db, <<<SQL
-                UPDATE `users` SET `session` = :session WHERE `id` = :id
+                UPDATE `users`
+                SET `session` = :session
+                WHERE `id` = :id
             SQL, [
                 ":session" => $session,
                 ":id" => $user["id"]
