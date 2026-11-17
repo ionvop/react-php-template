@@ -5,7 +5,7 @@ $data = json_decode(file_get_contents("php://input"), true);
 
 function validateTaskAccess(SQLite3 $db, int $projectId, array $user): void {
     $project = executePreparedQuery($db, <<<SQL
-        SELECT * FROM `projects` WHERE `project_id` = :project_id
+        SELECT * FROM `projects` WHERE `id` = :project_id
     SQL, [
         ":project_id" => $projectId
     ])->fetchArray(SQLITE3_ASSOC);
@@ -81,7 +81,7 @@ try {
                 ]
             ], 400);
         case "POST":
-            switch ($data["_method"]) {
+            switch ($data["_method"] ?? null) {
                 case "PUT":
                     if (isset($_GET["id"]) == false) {
                         jsonResponse([
@@ -99,6 +99,7 @@ try {
                         SET `content` = :content
                         WHERE `id` = :id
                     SQL, [
+                        ":content" => $data["content"],
                         ":id" => $task["id"]
                     ], function() {
                         jsonResponse([
@@ -148,7 +149,7 @@ try {
 
             executePreparedQuery($db, <<<SQL
                 INSERT INTO `tasks` (`project_id`, `content`)
-                VALUE (:project_id, :content)
+                VALUES (:project_id, :content)
             SQL, [
                 ":project_id" => $data["project_id"],
                 ":content" => $data["content"]
