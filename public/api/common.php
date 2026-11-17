@@ -1,6 +1,9 @@
 <?php
 
-require_once __DIR__ . "/config.php";
+if (is_file(__DIR__ . "/config.php")) {
+    require_once __DIR__ . "/config.php";
+}
+
 $db = new SQLite3(__DIR__ . "/database.db");
 
 /**
@@ -148,7 +151,7 @@ function getUser(SQLite3 $db): array | false {
     }
 
     $user = executePreparedQuery($db, <<<SQL
-        SELECT * FROM `users` WHERE :session
+        SELECT * FROM `users` WHERE `session` = :session
     SQL, [
         ":session" => $_COOKIE["session"]
     ])->fetchArray(SQLITE3_ASSOC);
