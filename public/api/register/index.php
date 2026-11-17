@@ -54,12 +54,23 @@ try {
 
             $hash = password_hash($data["password"], PASSWORD_DEFAULT);
 
-            executePreparedQuery($db, <<<SQL
+            $success = executePreparedQuery($db, <<<SQL
                 INSERT INTO `users` (`username`, `hash`)
                 VALUES (:username, :hash)
             SQL, [
                 ":username" => $data["username"]
             ]);
+
+            if ($success == false) {
+                http_response_code(500);
+
+                echo json_encode([
+                    "status" => "error",
+                    "message" => "Failed to create user."
+                ]);
+
+                exit;
+            }
 
             http_response_code(201);
 
@@ -70,22 +81,14 @@ try {
 
             exit;
         default:
-            http_response_code(405);
-
-            echo json_encode([
+            jsonResponse([
                 "status" => "error",
                 "message" => "Method not allowed."
-            ]);
-
-            exit;
+            ], 405);
     }
 } catch (Exception $e) {
-    http_response_code(500);
-
-    echo json_encode([
+    jsonResponse([
         "status" => "error",
         "message" => $e->getMessage()
-    ]);
-
-    exit;
+    ], 500);
 }
