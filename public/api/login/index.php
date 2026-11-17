@@ -21,9 +21,7 @@ try {
                 ], 401);
             }
 
-            $success = password_verify($data["password"], $user["hash"]);
-
-            if ($success == false) {
+            if (password_verify($data["password"], $user["hash"]) == false) {
                 jsonResponse([
                     "status" => "fail",
                     "data" => [
