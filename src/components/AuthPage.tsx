@@ -15,18 +15,25 @@ export function AuthPage({ onSignIn, onSignUp, onRegistered, lastUsername }: Aut
   const [mode, setMode] = useState<Mode>("login");
   const [username, setUsername] = useState(lastUsername ?? "");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [pending, setPending] = useState(false);
   const [fields, setFields] = useState<FieldErrors>({});
   const [message, setMessage] = useState<string | null>(null);
+  const confirmPasswordMismatch = confirmPassword !== "" && confirmPassword !== password;
 
   function switchMode(next: Mode) {
     setMode(next);
+    setConfirmPassword("");
     setFields({});
     setMessage(null);
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (mode === "register" && (confirmPassword === "" || confirmPasswordMismatch)) {
+      return;
+    }
+
     setPending(true);
     setFields({});
     setMessage(null);
@@ -39,6 +46,7 @@ export function AuthPage({ onSignIn, onSignUp, onRegistered, lastUsername }: Aut
         onRegistered("Account created. Sign in to continue.");
         setMode("login");
         setPassword("");
+        setConfirmPassword("");
       }
     } catch (error) {
       if (error instanceof ApiError) {
@@ -118,6 +126,29 @@ export function AuthPage({ onSignIn, onSignUp, onRegistered, lastUsername }: Aut
               />
               {fields.password && <p className="label text-error">{fields.password}</p>}
             </fieldset>
+
+            {mode === "register" && (
+              <fieldset className="fieldset">
+                <legend className="fieldset-legend">Confirm password</legend>
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  className={`input w-full ${confirmPasswordMismatch ? "input-error" : ""}`}
+                  placeholder="Re-enter your password"
+                  autoComplete="new-password"
+                  value={confirmPassword}
+                  onChange={(event) => setConfirmPassword(event.target.value)}
+                  aria-invalid={confirmPasswordMismatch}
+                  aria-describedby={confirmPasswordMismatch ? "confirm-password-error" : undefined}
+                  required
+                />
+                {confirmPasswordMismatch && (
+                  <p id="confirm-password-error" className="label text-error">
+                    Passwords do not match.
+                  </p>
+                )}
+              </fieldset>
+            )}
 
             <button type="submit" className="btn btn-primary btn-block" disabled={pending}>
               {pending && <span className="loading loading-spinner loading-sm"></span>}
