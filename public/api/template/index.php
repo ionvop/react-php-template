@@ -9,23 +9,43 @@ try {
         case "GET":
             if (isset($_GET["id"])) {
                 // GET by ID logic goes here
-                exit;
+            
+                jsonResponse([
+                    "status" => "success",
+                    "data" => null
+                ]);
             }
 
             // GET all logic goes here
-            exit;
+            
+            jsonResponse([
+                "status" => "success",
+                "data" => null
+            ]);
         case "POST":
             switch ($data["_method"]) {
                 case "PUT":
                     // PUT logic goes here
-                    exit;
+                    
+                    jsonResponse([
+                        "status" => "success",
+                        "data" => null
+                    ]);
                 case "DELETE":
                     // DELETE logic goes here
-                    exit;
+                    
+                    jsonResponse([
+                        "status" => "success",
+                        "data" => null
+                    ]);
             }
 
             // POST logic goes here
-            exit;
+            
+            jsonResponse([
+                "status" => "success",
+                "data" => null
+            ]);
         default:
             jsonResponse([
                 "status" => "error",
