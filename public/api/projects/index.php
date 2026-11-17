@@ -3,6 +3,26 @@
 require_once __DIR__ . "/../common.php";
 $data = json_decode(file_get_contents("php://input"), true);
 
+function getProjectById(SQLite3 $db, int $id, array $user): array {
+    $project = executePreparedQuery($db, <<<SQL
+        SELECT * FROM `projects` WHERE `user_id` = :user_id AND `id` = :id
+    SQL, [
+        ":user_id" => $user["id"],
+        ":id" => $id
+    ])->fetchArray(SQLITE3_ASSOC);
+
+    if ($project == false) {
+        jsonResponse([
+            "status" => "fail",
+            "data" => [
+                "project" => "Project not found."
+            ]
+        ], 404);
+    }
+
+    return $project;
+}
+
 try {
     $user = getUser($db);
 
@@ -18,21 +38,7 @@ try {
     switch ($_SERVER["REQUEST_METHOD"]) {
         case "GET":
             if (isset($_GET["id"])) {
-                $project = executePreparedQuery($db, <<<SQL
-                    SELECT * FROM `projects` WHERE `user_id` = :user_id AND `id` = :id
-                SQL, [
-                    ":user_id" => $user["id"],
-                    ":id" => $_GET["id"]
-                ])->fetchArray(SQLITE3_ASSOC);
-
-                if ($project == false) {
-                    jsonResponse([
-                        "status" => "fail",
-                        "data" => [
-                            "project" => "Project not found."
-                        ]
-                    ], 404);
-                }
+                $project = getProjectById($db, $_GET["id"], $user);
 
                 $taskResult = executePreparedQuery($db, <<<SQL
                     SELECT * FROM `tasks` WHERE `project_id` = :project_id
@@ -86,20 +92,7 @@ try {
                         ], 400);
                     }
 
-                    $project = executePreparedQuery($db, <<<SQL
-                        SELECT * FROM `projects` WHERE `user_id` = :user_id AND `id` = :id
-                    SQL, [
-                        ":id" => $_GET["id"]
-                    ])->fetchArray(SQLITE3_ASSOC);
-
-                    if ($project == false) {
-                        jsonResponse([
-                            "status" => "fail",
-                            "data" => [
-                                "project" => "Project not found."
-                            ]
-                        ], 404);
-                    }
+                    $project = getProjectById($db, $_GET["id"], $user);
 
                     executePreparedQuery($db, <<<SQL
                         UPDATE `projects`
@@ -116,11 +109,7 @@ try {
                         ], 500);
                     });
 
-                    $project = executePreparedQuery($db, <<<SQL
-                        SELECT * FROM `projects` WHERE `id` = :id
-                    SQL, [
-                        ":id" => $project["id"]
-                    ])->fetchArray(SQLITE3_ASSOC);
+                    $project = getProjectById($db, $project["id"], $user);
 
                     jsonResponse([
                         "status" => "success",
@@ -138,20 +127,7 @@ try {
                         ], 400);
                     }
 
-                    $project = executePreparedQuery($db, <<<SQL
-                        SELECT * FROM `projects` WHERE `user_id` = :user_id AND `id` = :id
-                    SQL, [
-                        ":id" => $_GET["id"]
-                    ])->fetchArray(SQLITE3_ASSOC);
-
-                    if ($project == false) {
-                        jsonResponse([
-                            "status" => "fail",
-                            "data" => [
-                                "project" => "Project not found."
-                            ]
-                        ], 404);
-                    }
+                    $project = getProjectById($db, $_GET["id"], $user);
 
                     executePreparedQuery($db, <<<SQL
                         DELETE FROM `projects` WHERE `id` = :id
@@ -184,18 +160,7 @@ try {
                 ], 500);
             });
 
-            $project = executePreparedQuery($db, <<<SQL
-                SELECT * FROM `projects` WHERE `id` = :id
-            SQL, [
-                ":id" => $db->lastInsertRowID()
-            ])->fetchArray(SQLITE3_ASSOC);
-
-            if ($project == false) {
-                jsonResponse([
-                    "status" => "error",
-                    "message" => "Failed to retrieve project."
-                ], 500);
-            }
+            $project = getProjectById($db, $db->lastInsertRowID(), $user);
 
             jsonResponse([
                 "status" => "success",
