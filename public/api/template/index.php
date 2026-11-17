@@ -24,6 +24,15 @@ try {
         case "POST":
             switch ($data["_method"]) {
                 case "PUT":
+                    if (isset($_GET["id"]) == false) {
+                        jsonResponse([
+                            "status" => "fail",
+                            "data" => [
+                                "id" => "ID is required for update."
+                            ]
+                        ], 400);
+                    }
+
                     // PUT logic goes here
                     
                     jsonResponse([
@@ -31,6 +40,15 @@ try {
                         "data" => null
                     ]);
                 case "DELETE":
+                    if (isset($_GET["id"]) == false) {
+                        jsonResponse([
+                            "status" => "fail",
+                            "data" => [
+                                "id" => "ID is required for deletion."
+                            ]
+                        ], 400);
+                    }
+
                     // DELETE logic goes here
                     
                     jsonResponse([
