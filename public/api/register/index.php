@@ -45,7 +45,8 @@ try {
                 INSERT INTO `users` (`username`, `hash`)
                 VALUES (:username, :hash)
             SQL, [
-                ":username" => $data["username"]
+                ":username" => $data["username"],
+                ":hash" => $hash
             ], function() {
                 jsonResponse([
                     "status" => "error",
