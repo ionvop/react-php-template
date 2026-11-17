@@ -2,18 +2,19 @@
 
 require_once __DIR__ . "/../common.php";
 $data = json_decode(file_get_contents("php://input"), true);
-$user = getUser($db);
-
-if ($user == false) {
-    jsonResponse([
-        "status" => "fail",
-        "data" => [
-            "session" => "Invalid session."
-        ]
-    ], 401);
-}
 
 try {
+    $user = getUser($db);
+
+    if ($user == false) {
+        jsonResponse([
+            "status" => "fail",
+            "data" => [
+                "session" => "Invalid session."
+            ]
+        ], 401);
+    }
+
     switch ($_SERVER["REQUEST_METHOD"]) {
         case "GET":
             if (isset($_GET["id"])) {
@@ -33,6 +34,20 @@ try {
                     ], 404);
                 }
 
+                $taskResult = executePreparedQuery($db, <<<SQL
+                    SELECT * FROM `tasks` WHERE `project_id` = :project_id
+                SQL, [
+                    ":project_id" => $project["id"]
+                ]);
+
+                $tasks = [];
+
+                while ($task = $taskResult->fetchArray(SQLITE3_ASSOC)) {
+                    $tasks[] = $task;
+                }
+
+                $project["tasks"] = $tasks;
+
                 jsonResponse([
                     "status" => "success",
                     "data" => [
@@ -46,13 +61,6 @@ try {
             SQL, [
                 ":user_id" => $user["id"]
             ]);
-
-            if ($projectResult == false) {
-                jsonResponse([
-                    "status" => "error",
-                    "message" => "Failed to retrieve projects."
-                ], 500);
-            }
 
             $projects = [];
 
@@ -69,50 +77,112 @@ try {
         case "POST":
             switch ($data["_method"]) {
                 case "PUT":
-                    $success = executePreparedQuery($db, <<<SQL
+                    if (isset($_GET["id"]) == false) {
+                        jsonResponse([
+                            "status" => "fail",
+                            "data" => [
+                                "id" => "Project ID is required for update."
+                            ]
+                        ], 400);
+                    }
+
+                    $project = executePreparedQuery($db, <<<SQL
+                        SELECT * FROM `projects` WHERE `user_id` = :user_id AND `id` = :id
+                    SQL, [
+                        ":id" => $_GET["id"]
+                    ])->fetchArray(SQLITE3_ASSOC);
+
+                    if ($project == false) {
+                        jsonResponse([
+                            "status" => "fail",
+                            "data" => [
+                                "project" => "Project not found."
+                            ]
+                        ], 404);
+                    }
+
+                    executePreparedQuery($db, <<<SQL
                         UPDATE `projects`
                         SET `title` = :title, `description` = :description
                         WHERE `id` = :id
                     SQL, [
                         ":title" => $data["title"],
-                        ":description" => $data["description"]
-                    ]);
-
-                    if ($success == false) {
+                        ":description" => $data["description"],
+                        ":id" => $project["id"]
+                    ], function() {
                         jsonResponse([
                             "status" => "error",
                             "message" => "Failed to update project."
                         ], 500);
-                    }
+                    });
+
+                    $project = executePreparedQuery($db, <<<SQL
+                        SELECT * FROM `projects` WHERE `id` = :id
+                    SQL, [
+                        ":id" => $project["id"]
+                    ])->fetchArray(SQLITE3_ASSOC);
 
                     jsonResponse([
                         "status" => "success",
-                        "data" => null
+                        "data" => [
+                            "project" => $project
+                        ]
                     ]);
                 case "DELETE":
-                    // DELETE logic goes here
+                    if (isset($_GET["id"]) == false) {
+                        jsonResponse([
+                            "status" => "fail",
+                            "data" => [
+                                "id" => "Project ID is required for deletion."
+                            ]
+                        ], 400);
+                    }
+
+                    $project = executePreparedQuery($db, <<<SQL
+                        SELECT * FROM `projects` WHERE `user_id` = :user_id AND `id` = :id
+                    SQL, [
+                        ":id" => $_GET["id"]
+                    ])->fetchArray(SQLITE3_ASSOC);
+
+                    if ($project == false) {
+                        jsonResponse([
+                            "status" => "fail",
+                            "data" => [
+                                "project" => "Project not found."
+                            ]
+                        ], 404);
+                    }
+
+                    executePreparedQuery($db, <<<SQL
+                        DELETE FROM `projects` WHERE `id` = :id
+                    SQL, [
+                        ":id" => $project["id"]
+                    ], function() {
+                        jsonResponse([
+                            "status" => "error",
+                            "message" => "Failed to delete project."
+                        ], 500);
+                    });
                     
                     jsonResponse([
                         "status" => "success",
                         "data" => null
-                    ]);
+                    ], 204);
             }
 
-            $success = executePreparedQuery($db, <<<SQL
+            executePreparedQuery($db, <<<SQL
                 INSERT INTO `projects` (`user_id`, `title`, `description`)
                 VALUES (:user_id, :title, :description)
             SQL, [
                 ":user_id" => $user["id"],
                 ":title" => $data["title"],
                 ":description" => $data["description"]
-            ]);
-
-            if ($success == false) {
+            ], function() {
                 jsonResponse([
                     "status" => "error",
                     "message" => "Failed to create project."
                 ], 500);
-            }
+            });
 
             $project = executePreparedQuery($db, <<<SQL
                 SELECT * FROM `projects` WHERE `id` = :id
