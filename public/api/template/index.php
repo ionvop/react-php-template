@@ -1,7 +1,6 @@
 <?php
 
 require_once __DIR__ . "/../common.php";
-header("Content-Type: application/json");
 $data = json_decode(file_get_contents("php://input"), true);
 
 try {
@@ -37,7 +36,7 @@ try {
                     jsonResponse([
                         "status" => "success",
                         "data" => null
-                    ]);
+                    ], 204);
             }
 
             // POST logic goes here
@@ -45,7 +44,7 @@ try {
             jsonResponse([
                 "status" => "success",
                 "data" => null
-            ]);
+            ], 201);
         default:
             jsonResponse([
                 "status" => "error",
