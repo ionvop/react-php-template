@@ -46,7 +46,7 @@ try {
                 ], 500);
             });
 
-            setcookie("session", $session, 86400, "/");
+            setcookie("session", $session, time() + 86400, "/");
 
             jsonResponse([
                 "status" => "success",
