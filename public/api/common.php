@@ -120,6 +120,13 @@ function fetch(string $url, array $options = []): array {
     ];
 }
 
+function jsonResponse(mixed $data, int $status = 200): never {
+    header("Content-Type: application/json");
+    http_response_code($status);
+    echo json_encode($data);
+    exit;
+}
+
 function getUser(SQLite3 $db): array | false {
     if (isset($_COOKIE["session"]) == false) {
         return false;
