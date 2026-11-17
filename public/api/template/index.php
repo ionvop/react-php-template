@@ -27,22 +27,14 @@ try {
             // POST logic goes here
             exit;
         default:
-            http_response_code(405);
-
-            echo json_encode([
+            jsonResponse([
                 "status" => "error",
                 "message" => "Method not allowed."
-            ]);
-
-            exit;
+            ], 405);
     }
 } catch (Exception $e) {
-    http_response_code(500);
-
-    echo json_encode([
+    jsonResponse([
         "status" => "error",
         "message" => $e->getMessage()
-    ]);
-
-    exit;
+    ], 500);
 }
