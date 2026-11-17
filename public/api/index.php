@@ -7,31 +7,19 @@ $data = json_decode(file_get_contents("php://input"), true);
 try {
     switch ($_SERVER["REQUEST_METHOD"]) {
         case "GET":
-            http_response_code(200);
-
-            echo json_encode([
+            jsonResponse([
                 "status" => "success",
                 "data" => null
             ]);
-
-            exit;
         default:
-            http_response_code(405);
-
-            echo json_encode([
+            jsonResponse([
                 "status" => "error",
                 "message" => "Method not allowed."
-            ]);
-
-            exit;
+            ], 405);
     }
 } catch (Exception $e) {
-    http_response_code(500);
-
-    echo json_encode([
+    jsonResponse([
         "status" => "error",
         "message" => $e->getMessage()
-    ]);
-
-    exit;
+    ], 500);
 }
