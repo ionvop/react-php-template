@@ -23,9 +23,9 @@ function getUserById(SQLite3 $db, int $id): array {
 }
 
 try {
-    $headers = getallheaders();
+    $headers = array_change_key_case(getallheaders(), CASE_LOWER);
 
-    if ($headers == false || isset($headers["Authorization"]) == false) {
+    if ($headers == false || isset($headers["authorization"]) == false) {
         jsonResponse([
             "status" => "fail",
             "data" => [
@@ -34,7 +34,7 @@ try {
         ], 400);
     }
 
-    if ($headers["Authorization"] != "Bearer " . $ADMIN_KEY) {
+    if ($headers["authorization"] != "Bearer " . $ADMIN_KEY) {
         jsonResponse([
             "status" => "fail",
             "data" => [
