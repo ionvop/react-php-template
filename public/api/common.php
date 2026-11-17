@@ -21,14 +21,20 @@ $db = new SQLite3(__DIR__ . "/database.db");
  *
  * @throws Exception If the query fails to prepare (e.g. invalid SQL syntax).
  */
-function executePreparedQuery(SQLite3 $db, string $query, array $values = []): SQLite3Result | false {
+function executePreparedQuery(SQLite3 $db, string $query, array $values = [], ?callable $onFailure = null): SQLite3Result | false {
     $stmt = $db->prepare($query);
     
     foreach ($values as $param => $value) {
         $stmt->bindValue($param, $value);
     }
     
-    return $stmt->execute();
+    $result = $stmt->execute();
+
+    if ($result == false && $onFailure != null) {
+        $onFailure($stmt, $db->lastErrorMsg());
+    }
+
+    return $result;
 }
 
 /**
