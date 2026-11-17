@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
-    "serve": "npm run build && php -S localhost:8000 -t dist",
+    "serve": "php public/api/tools/init.php && npm run build && php -S localhost:8000 -t dist",
     "lint": "oxlint",
     "preview": "vite preview"
   },
