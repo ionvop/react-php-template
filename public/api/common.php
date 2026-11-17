@@ -1,9 +1,6 @@
 <?php
 
-if (is_file(__DIR__ . "/config.php")) {
-    require_once __DIR__ . "/config.php";
-}
-
+require_once __DIR__ . "/config.php";
 $db = new SQLite3(__DIR__ . "/database.db");
 
 /**
