@@ -14,68 +14,56 @@ try {
             ])->fetchArray(SQLITE3_ASSOC);
 
             if ($user == false) {
-                http_response_code(401);
-
-                echo json_encode([
+                jsonResponse([
                     "status" => "fail",
                     "data" => [
                         "username" => "Invalid username or password."
                     ]
-                ]);
-
-                exit;
+                ], 401);
             }
 
             $success = password_verify($data["password"], $user["hash"]);
 
             if ($success == false) {
-                http_response_code(401);
-
-                echo json_encode([
+                jsonResponse([
                     "status" => "fail",
                     "data" => [
                         "username" => "Invalid username or password."
                     ]
-                ]);
-
-                exit;
+                ], 401);
             }
 
             $session = uniqid("session-");
 
-            executePreparedQuery($db, <<<SQL
+            $success = executePreparedQuery($db, <<<SQL
                 UPDATE `users` SET `session` = :session WHERE `id` = :id
             SQL, [
                 ":session" => $session,
                 ":id" => $user["id"]
             ]);
 
-            setcookie("session", $session, 86400, "/");
-            http_response_code(200);
+            if ($success == false) {
+                jsonResponse([
+                    "status" => "error",
+                    "message" => "Failed to create session."
+                ], 500);
+            }
 
-            echo json_encode([
+            setcookie("session", $session, 86400, "/");
+
+            jsonResponse([
                 "status" => "success",
                 "data" => null
             ]);
-
-            exit;
         default:
-            http_response_code(405);
-
-            echo json_encode([
+            jsonResponse([
                 "status" => "error",
                 "message" => "Method not allowed."
-            ]);
-
-            exit;
+            ], 405);
     }
 } catch (Exception $e) {
-    http_response_code(500);
-
-    echo json_encode([
+    jsonResponse([
         "status" => "error",
         "message" => $e->getMessage()
-    ]);
-
-    exit;
+    ], 500);
 }
