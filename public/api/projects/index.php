@@ -77,25 +77,55 @@ try {
                     exit;
             }
 
-            // POST logic goes here
-            exit;
-        default:
-            http_response_code(405);
-
-            echo json_encode([
-                "status" => "error",
-                "message" => "Method not allowed."
+            $success = executePreparedQuery($db, <<<SQL
+                INSERT INTO `projects` (`user_id`, `title`, `description`)
+                VALUES (:user_id, :title, :description)
+            SQL, [
+                ":user_id" => $user["id"],
+                ":title" => $data["title"],
+                ":description" => $data["description"]
             ]);
 
+            if ($success == false) {
+                http_response_code(500);
+
+                echo json_encode([
+                    "status" => "error",
+                    "message" => "Failed to create project."
+                ]);
+
+                exit;
+            }
+
+            $project = executePreparedQuery($db, <<<SQL
+                SELECT * FROM `projects` WHERE `id` = :id
+            SQL, [
+                ":id" => $db->lastInsertRowID()
+            ])->fetchArray(SQLITE3_ASSOC);
+
+            if ($project == false) {
+                http_response_code(500);
+
+                echo json_encode([
+                    "status" => "error",
+                    "message" => "Failed to retrieve project."
+                ]);
+
+                exit;
+            }
+
+            http_response_code(201);
+
             exit;
+        default:
+            jsonResponse([
+                "status" => "error",
+                "message" => "Method not allowed."
+            ], 405);
     }
 } catch (Exception $e) {
-    http_response_code(500);
-
-    echo json_encode([
+    jsonResponse([
         "status" => "error",
         "message" => $e->getMessage()
-    ]);
-
-    exit;
+    ], 500);
 }
