@@ -32,6 +32,9 @@ This template is built around that constraint:
 ```powershell
 npm install
 
+# Install daisyUI skills
+npx skills add saadeghi/daisyui --agent github-copilot --yes
+
 # config.php is gitignored; create it from the committed template
 Copy-Item public/api/config-template.php public/api/config.php
 
