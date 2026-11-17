@@ -7,7 +7,12 @@ $data = json_decode(file_get_contents("php://input"), true);
 try {
     switch ($_SERVER["REQUEST_METHOD"]) {
         case "GET":
-            // GET logic goes here
+            if (isset($_GET["id"])) {
+                // GET by ID logic goes here
+                exit;
+            }
+
+            // GET all logic goes here
             exit;
         case "POST":
             switch ($data["_method"]) {
