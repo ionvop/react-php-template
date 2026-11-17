@@ -163,3 +163,5 @@ function getUser(SQLite3 $db): array | false {
 
     return $user;
 }
+
+// All helper functions shared across files go here
