@@ -16,10 +16,11 @@ $db = new SQLite3(__DIR__ . "/database.db");
  * @param array   $values Associative array mapping each placeholder name
  *                        (including the leading colon) to its bound value,
  *                        e.g. [':email' => $email].
+ * @param callable|null $onFailure Optional callback invoked when execution
+ *                                 fails, with the statement and database error
+ *                                 message as arguments.
  *
- * @return SQLite3Result|false The result set produced by executing the statement.
- *
- * @throws Exception If the query fails to prepare (e.g. invalid SQL syntax).
+ * @return SQLite3Result|false The result set, or false if execution fails.
  */
 function executePreparedQuery(SQLite3 $db, string $query, array $values = [], ?callable $onFailure = null): SQLite3Result | false {
     $stmt = $db->prepare($query);
