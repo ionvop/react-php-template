@@ -575,7 +575,7 @@ columns and payload keys accordingly.
 
 ## Agents
 
-Short version of the repository's `AGENTS.md`, for AI coding agents working in this folder.
+For AI coding agents working in this folder.
 
 **Permissions — do not spend effort on these.** They are deliberate product decisions.
 
