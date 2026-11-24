@@ -244,7 +244,9 @@ A `204` still carries a JSON body because `jsonResponse()` always echoes. Client
 
 ## Response envelope
 
-Every response — success or failure — is a single JSON object:
+Every response — success or failure — is a single JSON object. The envelope follows the
+[JSend specification](https://github.com/omniti-labs/jsend), which defines the same three
+`status` values (`success`, `fail`, `error`) and the same `data` / `message` fields used here:
 
 ```json
 { "status": "success", "data": { } }
