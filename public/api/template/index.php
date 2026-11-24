@@ -3,7 +3,11 @@
 require_once __DIR__ . "/../common.php";
 $data = json_decode(file_get_contents("php://input"), true);
 
+// Helper functions that only this file needs go here
+
 try {
+    // Endpoint authentication and authorization logic goes here
+
     switch ($_SERVER["REQUEST_METHOD"]) {
         case "GET":
             if (isset($_GET["id"])) {
