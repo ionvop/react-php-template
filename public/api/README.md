@@ -339,16 +339,6 @@ while ($project = $result->fetchArray(SQLITE3_ASSOC)) {
 **Cast ids in responses.** SQLite returns integers as-is but be explicit where the frontend expects
 a number: `"id" => (int) $user["id"]`.
 
-**Ownership is enforced in the `WHERE` clause.** Do not fetch a row and compare owners afterwards.
-Scope the query to the caller:
-
-```sql
-SELECT * FROM `projects` WHERE `user_id` = :user_id AND `id` = :id
-```
-
-A row that belongs to someone else is indistinguishable from a row that does not exist — both are
-`404`.
-
 ## Authentication
 
 Authentication is a cookie plus a database column. There is no token format, no signing, and no
