@@ -544,7 +544,6 @@ Checklist before you call it done:
 - [ ] Every branch ends in `jsonResponse()`.
 - [ ] `default` returns `405`.
 - [ ] Writes pass a failure callback.
-- [ ] Scoped queries include the owner in `WHERE`.
 - [ ] No `else` chains — guards only.
 
 ## Frontend contract
