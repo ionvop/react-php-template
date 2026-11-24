@@ -3,7 +3,7 @@
 require_once __DIR__ . "/../common.php";
 $data = json_decode(file_get_contents("php://input"), true);
 
-// Helper functions that only this file needs go here
+// Endpoint-local helper functions go here
 
 try {
     // Endpoint authentication and authorization logic goes here
