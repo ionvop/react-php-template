@@ -554,8 +554,14 @@ The frontend wrapper in `src/lib/api.ts` is the only module that calls `fetch`. 
 following, so keep them stable:
 
 - **Base URL** is `${import.meta.env.BASE_URL}api`, so the same build works at `/` or `/my-app/`.
+- **Trailing slash on every endpoint** — `/api/projects/`, not `/api/projects`. On some free
+  shared hosts (InfinityFree, for example) a slashless path like
+  `https://example.com/my-app/api/profile` is redirected to a `403` error page, while
+  `https://example.com/my-app/api/profile/` reaches `index.php` and returns the normal response
+  (a `401` for a signed-out user). Append `/` before any `?id=...` query string.
 - **`credentials: "include"`** on every request — the session cookie is the auth mechanism.
-- **Only `GET` and `POST`** are ever sent; mutations carry `_method` in the body.
+- **Only `GET` and `POST`** are ever sent; mutations carry `_method` in the body. Some free shared
+  hosts (again, InfinityFree) allow only these two methods, which is why the override exists.
 - **`status: "success"`** unwraps to `data`, or `null` when `data` is absent.
 - **`204` and empty bodies** resolve to `null` rather than throwing.
 - **Anything else** throws `ApiError` carrying the HTTP status and the string values from `data`
